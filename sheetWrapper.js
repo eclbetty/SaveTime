@@ -49,14 +49,11 @@ class SheetWrapper {
   async init() {
     try {
       this.browser = await puppeteer.launch({
-        headless: false,
+        headless: true,
         defaultViewport: null,
         ignoreHTTPSErrors: true,
         args: ["--proxy-server='direct://'", "--proxy-bypass-list=*"],
       });
-      this.pages["customer"] = await this.createNewPage(urls.customer);
-      this.pages["gamePlayer"] = await this.createNewPage(urls.gamePlayer);
-      this.pages["transaction"] = await this.createNewPage(urls.transaction);
 
       console.log("Done loading...");
     } catch (e) {
@@ -104,20 +101,23 @@ class SheetWrapper {
 
   async writeTo(sheet, values) {
     try {
-      let page = this.pages[sheet];
-
-      await page.bringToFront();
-
       // construct url here
       let url = this.constructFormURL(sheet, values);
-      await page.goto(url);
+      let page = await this.createNewPage(url);
+
       // submit
+      const navigationPromise = page.waitForNavigation();
       await page.click(
         "#mG61Hd > div > div > div.freebirdFormviewerViewNavigationNavControls > div.freebirdFormviewerViewNavigationButtonsAndProgress > div > div > span"
       );
+      await navigationPromise;
     } catch (e) {
       console.log(e);
     }
+  }
+
+  async close() {
+    await this.browser.close();
   }
 }
 
