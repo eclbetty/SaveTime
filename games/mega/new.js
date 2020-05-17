@@ -54,7 +54,7 @@ function main() {
 
   let bonusReasonOpt = [
     "Normal Package",
-    "Deposit Bonus 10%",
+    "Deposit Bonus 5%",
     "Welcome Bonus 50%",
     "Withdraw Free Credit",
     "Withdraw 10%",

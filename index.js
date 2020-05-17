@@ -3,7 +3,6 @@
   const cors = require("cors");
   const bodyParser = require("body-parser");
   const SheetWrapper = require("./sheetWrapper");
-  // const SheetWrapperTwo = require("./sheetWrapper_2");
 
   const app = express();
   app.use(cors());
@@ -20,6 +19,9 @@
   let shopeeRate = 0.0212;
   let depositBonusRate = 0.05;
   let welcomeBonusRate = 1.0;
+
+  const sheetWrapper = new SheetWrapper();
+  await sheetWrapper.init();
 
   async function writeToSheet(admin, sheet, values) {
     try {
@@ -136,9 +138,6 @@
   }
 
   app.post("/new", async (req, res) => {
-    const sheetWrapper = new SheetWrapper();
-    await sheetWrapper.init();
-
     try {
       console.log(req.body);
       let {
@@ -214,15 +213,10 @@
       });
     } catch (e) {
       console.log(e);
-    } finally {
-      sheetWrapper.close();
     }
   });
 
   app.post("/transaction", async (req, res) => {
-    const sheetWrapper = new SheetWrapper();
-    await sheetWrapper.init();
-
     try {
       let {
         game,
@@ -269,8 +263,6 @@
       });
     } catch (e) {
       console.log(e);
-    } finally {
-      sheetWrapper.close();
     }
   });
 

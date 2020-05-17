@@ -274,6 +274,7 @@ OKButton.addEventListener("click", function () {
       bank,
       bonusReason,
       otherReason,
+      remark,
     });
   } catch (e) {
     alert("Please turn on the program");

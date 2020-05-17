@@ -39,11 +39,13 @@ let formEntry = {
 
 class SheetWrapper {
   constructor() {
-    this.browser;
+    this.browser = true;
+    this.browserWSEndpoint;
     this.pages = {};
 
     this.init = this.init.bind(this);
     this.createNewPage = this.createNewPage.bind(this);
+    this.waitForBrowser = this.waitForBrowser.bind(this);
   }
 
   async init() {
@@ -52,16 +54,27 @@ class SheetWrapper {
         headless: true,
         defaultViewport: null,
         ignoreHTTPSErrors: true,
-        args: ["--proxy-server='direct://'", "--proxy-bypass-list=*"],
       });
 
+      this.browserWSEndpoint = this.browser.wsEndpoint();
+
       console.log("Done loading...");
+
+      this.browser.on("disconnected", this.init);
     } catch (e) {
       console.log(e);
     }
   }
 
   async createNewPage(url) {
+    console.log(this.browser.isConnected());
+    if (!this.browser.isConnected()) {
+      console.log("Connect to browser");
+      this.browser = await puppeteer.connect({
+        browserWSEndpoint: this.browserWSEndpoint,
+      });
+    }
+
     let newPage = await this.browser.newPage();
     newPage.setUserAgent(
       "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/69.0.3497.100 Safari/537.36"
@@ -102,6 +115,13 @@ class SheetWrapper {
   async writeTo(sheet, values) {
     try {
       // construct url here
+
+      if (this.browser === false) {
+        console.log("The browser has been closed.");
+
+        await this.waitForBrowser;
+      }
+
       let url = this.constructFormURL(sheet, values);
       let page = await this.createNewPage(url);
 
@@ -111,13 +131,30 @@ class SheetWrapper {
         "#mG61Hd > div > div > div.freebirdFormviewerViewNavigationNavControls > div.freebirdFormviewerViewNavigationButtonsAndProgress > div > div > span"
       );
       await navigationPromise;
+
+      await page.waitFor(500);
+
+      await page.close();
     } catch (e) {
       console.log(e);
+      this.writeTo(sheet, values);
     }
   }
 
-  async close() {
-    await this.browser.close();
+  waitForBrowser() {
+    return new Promise((resolve, reject) => {
+      const browser_check = setInterval(() => {
+        if (this.browser !== false) {
+          clearInterval(browser_check);
+          resolve(true);
+        }
+      }, 100);
+    });
+  }
+
+  async disconnect() {
+    console.log("Disconnect from the browser");
+    await this.browser.disconnect();
   }
 }
 
